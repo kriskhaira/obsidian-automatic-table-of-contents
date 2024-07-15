@@ -35,6 +35,11 @@ const availableOptions = {
     default: 0,
     comment: 'Include headings up to the specified level',
   },
+  excludeHeadingText: {
+    type: 'string',
+    default: 'Content',
+    comment: 'Exclude heading with this text from TOC',
+  },
   includeLinks: {
     type: 'boolean',
     default: true,
@@ -153,9 +158,12 @@ function getMarkdownListFromHeadings(headings, isOrdered, options) {
   const minLevel = options.minLevel > 0
     ? options.minLevel
     : Math.min(...headings.map((heading) => heading.level))
+
   headings.forEach((heading) => {
     if (heading.level < minLevel) return
     if (options.maxLevel > 0 && heading.level > options.maxLevel) return
+    if (heading.heading.trim() === options.excludeHeadingText) return
+
     lines.push(`${'\t'.repeat(heading.level - minLevel)}${prefix} ${getMarkdownHeading(heading, options)}`)
   })
   return lines.length > 0 ? lines.join('\n') : null
@@ -165,10 +173,11 @@ function getMarkdownInlineFirstLevelFromHeadings(headings, options) {
   const minLevel = options.minLevel > 0
     ? options.minLevel
     : Math.min(...headings.map((heading) => heading.level))
+
   const items = headings
-    .filter((heading) => heading.level === minLevel)
+    .filter((heading) => heading.level === minLevel && heading.heading.trim() !== options.excludeHeadingText)
     .map((heading) => {
-      return getMarkdownHeading(heading, options)
+        return getMarkdownHeading(heading, options)
     })
   return items.length > 0 ? items.join(' | ') : null
 }
